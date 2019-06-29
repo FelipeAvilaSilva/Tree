@@ -1,3 +1,4 @@
+// Arvore AVL
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -15,23 +16,36 @@ typedef struct No{      //tree
     Apontador pEsq, pDir;
 }No;
 
-void Insert(Registro Reg, Apontador *pTree){        
+int back(Apontador q, Apontador *r);
+int Balanceamento(Apontador *pTree);
+
+int Insert(Registro Reg, Apontador *pTree){        
     if(*pTree == NULL){
         *pTree = (Apontador) malloc(sizeof(No));
         (*pTree)->Reg = Reg;
         (*pTree)->pEsq = NULL; (*pTree)->pDir = NULL;   //1º elemento
-        return;
+        return 1;
     }
-    if(Reg.Chave < (*pTree)->Reg.Chave){        //recursao no lado esq da tree
-        Insert(Reg, &(*pTree)->pEsq);
-        return;
+    else if(Reg.Chave < (*pTree)->Reg.Chave){
+        if(Insert(Reg, &(*pTree)->pEsq)){
+            if(Balanceamento(pTree))
+                return 0;
+            else 
+                return 1;
+        }
     }
-    if(Reg.Chave > (*pTree)->Reg.Chave){        //recursao no lado dir da tree 
-        Insert(Reg, &(*pTree)->pDir);
-    }else{
-        printf("Erro: Já existe uma pessoa com essa idade na arvore!\n");   
-    }
+    else if(Reg.Chave > (*pTree)->Reg.Chave){
+        if(Insert(Reg, &(*pTree)->pDir)){
+            if(Balanceamento(pTree))
+                return 0;
+            else
+                return 1;
+        }else
+            return 0;
+    }else
+        return 0; // ja tem esse valor
 }
+
 void Print(Apontador pTree){        
     if(pTree != NULL){
         printf("\n%s -", pTree->Reg.Nome); 
@@ -44,6 +58,7 @@ void Print(Apontador pTree){
         Print(pTree->pDir);
     }
 }
+
 void Seach(Registro *Reg, Apontador pTree){  
     if(pTree == NULL){
         printf("ERRO: nao tem registro na arvore\n");
@@ -60,6 +75,7 @@ void Seach(Registro *Reg, Apontador pTree){
         printf("idade %d pertence a %s.\n", Reg->Chave, Reg->Nome);  //imprime caso for igual 
     }
 }
+
 int back(Apontador q, Apontador *r){
     Apontador aux;
     if((*r)->pDir != NULL){
@@ -71,6 +87,7 @@ int back(Apontador q, Apontador *r){
     *r = (*r)->pEsq;
     free(aux);
 }
+
 int Remove(Registro Reg, Apontador *pTree){
     Apontador aux;
 
@@ -102,6 +119,81 @@ int Remove(Registro Reg, Apontador *pTree){
     *pTree = (*pTree)->pDir;
     free(aux);
 }
+
+int Altura(Apontador pTree){
+    int iEsq = 0, iDir = 0;
+
+    if(pTree == NULL)
+        return 0;
+
+    iEsq = Altura(pTree->pEsq);
+    iDir = Altura(pTree->pDir);
+
+    if(iEsq > iDir)
+        return iEsq + 1;
+    else
+        return iDir + 1;
+}
+
+int Fb(Apontador pTree){
+    if(pTree == NULL) return 0;
+    return Altura(pTree->pEsq) - Altura(pTree->pDir);
+}
+
+void Rotse(Apontador *pTree){
+    Apontador pAux;
+
+    pAux = (*pTree)->pDir;
+    (*pTree)->pDir = pAux->pEsq;
+    pAux->pEsq = (*pTree);
+    (*pTree) = pAux;
+}
+
+void Rotsd(Apontador *pTree){
+    Apontador pAux;
+
+    pAux = (*pTree)->pEsq;
+    (*pTree)->pEsq = pAux->pDir;
+    pAux->pDir = (*pTree);
+    (*pTree) = pAux;
+}
+
+int BalancaEsquerda(Apontador *pTree){
+    int fbe = Fb((*pTree)->pEsq);
+    if(fbe > 0){
+        Rotsd(pTree);
+        return 1;
+    }else if(fbe < 0){  //rotação dupla direita
+        Rotse(&((*pTree)->pEsq));
+        Rotsd(pTree); //&(*ptree);
+        return 1;
+    }
+return 0;
+}
+
+int BalancaDireita(Apontador *pTree){
+    int fbd = Fb((*pTree)->pDir);
+    if(fbd < 0){
+        Rotse(pTree);
+        return 1;
+    }else if(fbd > 0){ //Rotação dupla esquerda
+        Rotsd(&((*pTree)->pDir));
+        Rotse(pTree); //&(*ptree);
+        return 1;
+    }
+return 0;
+}
+
+int Balanceamento(Apontador *pTree){
+    int fb = Fb(*pTree);
+    if(fb > 1)
+        return BalancaEsquerda(pTree);
+    else if(fb < -1)
+        return BalancaDireita(pTree);
+    else 
+        return 0;
+}
+
 
 int main(){
     Registro Reg;
